@@ -14,6 +14,7 @@ const server = express();
 const port = process.env.PORT;
 
 const publicFolderPath = join(process.cwd(), "./public");
+
 //**************************** MIDDLEWARE *********************************** */
 const loggerMiddleware = (req, res, next) => {
   console.log(`Request method ${req.method} url ${req.url}`);
