@@ -23,7 +23,8 @@ const loggerMiddleware = (req, res, next) => {
 
 server.use(express.static(publicFolderPath));
 
-const whitelist = [process.env.FE_DEV_URL, process.env.FE_DEV_URL];
+const whitelist = [process.env.FE_DEV_URL, process.env.FE_PROD_URL];
+
 const corsOptions = {
   origin: (origin, corsNext) => {
     console.log("CURRENT ORIGIN: ", origin);
