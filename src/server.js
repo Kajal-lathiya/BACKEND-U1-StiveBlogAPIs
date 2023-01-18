@@ -4,7 +4,12 @@ import { join } from "path";
 import listEndpoints from "express-list-endpoints";
 import blogPostsRouter from "./blogs/index.js";
 import filesRouter from "./blogs/files/index.js";
-
+import {
+  badRequestHandler,
+  unauthorizedHandler,
+  notFoundHandler,
+  genericErrorHandler
+} from "./errorHandlers.js";
 // mongo collection
 import mongoose from "mongoose";
 import mongoBlogsRouter from "./blogs/mongoBlogs/index.js";
@@ -45,6 +50,12 @@ server.use(express.json());
 server.use("/blogPosts", loggerMiddleware, blogPostsRouter);
 server.use("/files", loggerMiddleware, filesRouter);
 server.use("/mongoBlogPosts", mongoBlogsRouter);
+
+// *************************** ERROR HANDLERS ********************************
+server.use(badRequestHandler);
+server.use(unauthorizedHandler);
+server.use(notFoundHandler);
+server.use(genericErrorHandler);
 
 mongoose.set("strictQuery", true);
 mongoose.connect(process.env.MONGO_URL);
