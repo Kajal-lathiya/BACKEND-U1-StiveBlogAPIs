@@ -1,6 +1,7 @@
 import express from "express";
 import StiveBlogsModel from "./model.js"; // mongodb collection model
 import createHttpError from "http-errors";
+import CommentsModel from "../comments/model.js";
 
 const mongoBlogsRouter = express.Router();
 
@@ -13,7 +14,6 @@ mongoBlogsRouter.post("/", async (req, res, next) => {
     next(error);
   }
 });
-
 mongoBlogsRouter.get("/", async (req, res, next) => {
   try {
     const blogPosts = await StiveBlogsModel.find();
@@ -22,7 +22,6 @@ mongoBlogsRouter.get("/", async (req, res, next) => {
     next(error);
   }
 });
-
 mongoBlogsRouter.get("/:postId", async (req, res, next) => {
   try {
     const blogPost = await StiveBlogsModel.findById(req.params.postId);
@@ -35,7 +34,6 @@ mongoBlogsRouter.get("/:postId", async (req, res, next) => {
     next(error);
   }
 });
-
 mongoBlogsRouter.put("/:postId", async (req, res, next) => {
   try {
     const updatedPost = await StiveBlogsModel.findByIdAndUpdate(
@@ -52,7 +50,6 @@ mongoBlogsRouter.put("/:postId", async (req, res, next) => {
     next(error);
   }
 });
-
 mongoBlogsRouter.delete("/:postId", async (req, res, next) => {
   try {
     const deletedPost = await StiveBlogsModel.findByIdAndDelete(
@@ -67,5 +64,28 @@ mongoBlogsRouter.delete("/:postId", async (req, res, next) => {
     next(error);
   }
 });
+
+// ******************************** EMBADDED COMMENTS ****************************
+mongoBlogsRouter.post("/:postId", async (req, res, next) => {
+  try {
+    const updatedPost = await StiveBlogsModel.findByIdAndUpdate(
+      req.params.postId,
+      { $push: { comments: req.body } },
+      { new: true, runValidators: true }
+    );
+    if (updatedPost) {
+      res.send(updatedPost);
+    } else {
+      next(
+        createHttpError(404, `Blog post id ${req.params.postId} not found!`)
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
 
 export default mongoBlogsRouter;

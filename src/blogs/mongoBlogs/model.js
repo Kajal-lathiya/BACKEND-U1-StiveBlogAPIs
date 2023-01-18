@@ -14,7 +14,13 @@ const stiveblogsSchema = new Schema(
       name: { type: String },
       avatar: { type: String }
     },
-    content: { type: String }
+    content: { type: String },
+    comments: [
+      {
+        comment: String,
+        rate: Number
+      }
+    ]
   },
   {
     timestamps: true // this option automatically the createdAt and updatedAt fields

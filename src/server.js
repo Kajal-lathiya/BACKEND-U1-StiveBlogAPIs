@@ -14,11 +14,14 @@ import {
 import mongoose from "mongoose";
 import mongoBlogsRouter from "./blogs/mongoBlogs/index.js";
 import createHttpError from "http-errors";
+import commentsRouter from "./blogs/comments/index.js";
 
 const server = express();
 const port = process.env.PORT;
 
+// *********************** GET FILE PATH *************************************
 const publicFolderPath = join(process.cwd(), "./public");
+server.use(express.static(publicFolderPath));
 
 //**************************** MIDDLEWARE *********************************** */
 const loggerMiddleware = (req, res, next) => {
@@ -26,10 +29,8 @@ const loggerMiddleware = (req, res, next) => {
   next();
 };
 
-server.use(express.static(publicFolderPath));
-
+// ***************************** CORS ORIGIN ************************************
 const whitelist = [process.env.FE_DEV_URL, process.env.FE_PROD_URL];
-
 const corsOptions = {
   origin: (origin, corsNext) => {
     console.log("CURRENT ORIGIN: ", origin);
@@ -41,15 +42,14 @@ const corsOptions = {
   }
 };
 server.use(cors(corsOptions));
-
 server.use(loggerMiddleware);
 server.use(express.json());
 
 //**************************** ENDPOINTS *********************************** */
-
 server.use("/blogPosts", loggerMiddleware, blogPostsRouter);
 server.use("/files", loggerMiddleware, filesRouter);
 server.use("/mongoBlogPosts", mongoBlogsRouter);
+server.use("/comments", commentsRouter);
 
 // *************************** ERROR HANDLERS ********************************
 server.use(badRequestHandler);
@@ -57,6 +57,7 @@ server.use(unauthorizedHandler);
 server.use(notFoundHandler);
 server.use(genericErrorHandler);
 
+// ************************** MONGODB COLLECTION ***********************
 mongoose.set("strictQuery", true);
 mongoose.connect(process.env.MONGO_URL);
 
