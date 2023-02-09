@@ -1,70 +1,77 @@
 import express from "express";
+
 import cors from "cors";
-import { join } from "path";
+
 import listEndpoints from "express-list-endpoints";
-import blogPostsRouter from "./blogs/index.js";
-import filesRouter from "./blogs/files/index.js";
-import {
-  badRequestHandler,
-  unauthorizedHandler,
-  notFoundHandler,
-  genericErrorHandler
-} from "./errorHandlers.js";
-// mongo collection
+
+import authorsRouter from "./authors/index.js";
+
+import blogsRouter from "./blogs/index.js";
+
+import { errorHandler } from "./errorHandlers.js";
+
+import path, { dirname } from "path";
+
+import { fileURLToPath } from "url";
+
 import mongoose from "mongoose";
-import mongoBlogsRouter from "./blogs/mongoBlogs/index.js";
-import createHttpError from "http-errors";
-import commentsRouter from "./blogs/comments/index.js";
+import authRouter from "./authRouter/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = dirname(__filename);
+
+const publicDirectory = path.join(__dirname, "../public");
 
 const server = express();
-const port = process.env.PORT;
 
-// *********************** GET FILE PATH *************************************
-const publicFolderPath = join(process.cwd(), "./public");
-server.use(express.static(publicFolderPath));
+const { PORT, MONGO_CONNECTION_STRING } = process.env;
 
-//**************************** MIDDLEWARE *********************************** */
-const loggerMiddleware = (req, res, next) => {
-  console.log(`Request method ${req.method} url ${req.url}`);
-  next();
-};
-
-// ***************************** CORS ORIGIN ************************************
-const whitelist = [process.env.FE_DEV_URL, process.env.FE_PROD_URL];
+const whiteList = ["http://localhost:3000"];
 const corsOptions = {
-  origin: (origin, corsNext) => {
-    console.log("CURRENT ORIGIN: ", origin);
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      corsNext(null, true);
+  origin: (origin, callback) => {
+    if (whiteList.some((allowedUrl) => allowedUrl === origin)) {
+      callback(null, true);
     } else {
-      createHttpError(400, `Origin ${origin} is not in whitelist`);
+      const error = new Error("Not allowed by cors!");
+      error.status = 403;
+
+      callback(error);
     }
-  }
+  },
 };
+
 server.use(cors(corsOptions));
-server.use(loggerMiddleware);
+
 server.use(express.json());
 
-//**************************** ENDPOINTS *********************************** */
-server.use("/blogPosts", loggerMiddleware, blogPostsRouter);
-server.use("/files", loggerMiddleware, filesRouter);
-server.use("/mongoBlogPosts", mongoBlogsRouter);
-server.use("/comments", commentsRouter);
+server.use(express.static(publicDirectory));
 
-// *************************** ERROR HANDLERS ********************************
-server.use(badRequestHandler);
-server.use(unauthorizedHandler);
-server.use(notFoundHandler);
-server.use(genericErrorHandler);
+server.use("/auth", authRouter);
 
-// ************************** MONGODB COLLECTION ***********************
-mongoose.set("strictQuery", true);
-mongoose.connect(process.env.MONGO_URL);
+server.use("/authors", authorsRouter);
 
-mongoose.connection.on("connected", () => {
-  console.log("Successfully connected to Mongo!");
-  server.listen(port, () => {
-    console.table(listEndpoints(server));
-    console.log(`server is running on port: ${port}`);
-  });
+server.use("/blogs", blogsRouter);
+
+
+
+
+server.use(errorHandler);
+
+console.log(listEndpoints(server));
+
+server.listen(PORT, async () => {
+  try {
+    await mongoose.connect(MONGO_CONNECTION_STRING, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`✅ Server is running on ${PORT}  and connected to db`);
+  } catch (error) {
+    console.log("Db connection is failed ", error);
+  }
 });
+
+server.on("error", (error) =>
+  console.log(`❌ Server is not running due to : ${error}`)
+);
