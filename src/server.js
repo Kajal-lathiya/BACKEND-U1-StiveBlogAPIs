@@ -1,17 +1,10 @@
 import express from "express";
-
 import cors from "cors";
-
 import listEndpoints from "express-list-endpoints";
-
 import authorsRouter from "./authors/index.js";
-
-import blogsRouter from "./blogs/index.js";
-
+import blogsRouter from "./blogs/index1.js";
 import { errorHandler } from "./errorHandlers.js";
-
 import path, { dirname } from "path";
-
 import { fileURLToPath } from "url";
 
 import mongoose from "mongoose";
@@ -25,7 +18,7 @@ const publicDirectory = path.join(__dirname, "../public");
 
 const server = express();
 
-const { PORT, MONGO_CONNECTION_STRING } = process.env;
+const { PORT, MONGO_URL } = process.env;
 
 const whiteList = ["http://localhost:3000"];
 const corsOptions = {
@@ -62,16 +55,16 @@ console.log(listEndpoints(server));
 
 server.listen(PORT, async () => {
   try {
-    await mongoose.connect(MONGO_CONNECTION_STRING, {
+    await mongoose.connect(MONGO_URL, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log(`✅ Server is running on ${PORT}  and connected to db`);
+    console.log(`Server is running on ${PORT} and connected to mongo db`);
   } catch (error) {
     console.log("Db connection is failed ", error);
   }
 });
 
 server.on("error", (error) =>
-  console.log(`❌ Server is not running due to : ${error}`)
+  console.log(`Server is not running due to : ${error}`)
 );
